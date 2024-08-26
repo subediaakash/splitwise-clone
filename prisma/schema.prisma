@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User { 
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  name String
+  priceTables PriceTable[] @relation("UserPriceTables")
+  payments    PriceTable[] @relation("UserPayments")
+  createdPriceTables PriceTable[] @relation("CreatorToPriceTables")
+}
+
+model PriceTable { 
+
+  id         Int      @id @default(autoincrement())
+  totalPrice Int
+  fullPaid   Boolean  @default(false)
+
+  description String
+  
+  
+  creatorId  Int
+  creator    User     @relation(fields: [creatorId], references: [id], name: "CreatorToPriceTables")
+  
+  members    User[]   @relation("UserPriceTables")
+  paidBy     User[]   @relation("UserPayments")
+}
