@@ -72,4 +72,12 @@ function GetGroups() {
   )
 }
 
+type priceTable = {
+  id: number,
+  description: string,
+  fullPaid: boolean,
+  totalPrice: number,
+  members: {}
+}
+
 export default GetGroups
