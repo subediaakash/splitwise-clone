@@ -10,10 +10,8 @@ export async function POST(
     const { userId } = await req.json();
 
     if (isNaN(priceTableId)) {
-        return NextResponse.json({ error: 'Invalid price table ID' }, { status: 404 });
+        return NextResponse.json({ error: 'Invalid price table ID' }, { status: 400 });
     }
-
-    console.log('log3');
 
     if (!userId) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -22,11 +20,20 @@ export async function POST(
     try {
         const priceTable = await prisma.priceTable.findUnique({
             where: { id: priceTableId },
+            include: { members: true, paidBy: true }
         });
 
         if (!priceTable) {
             return NextResponse.json({ error: 'Price table not found' }, { status: 404 });
         }
+
+        if (priceTable.paidBy.some(user => user.id === userId)) {
+            return NextResponse.json({ error: 'User has already paid' }, { status: 400 });
+        }
+
+        const totalMembers = priceTable.members.length;
+        const eachIndividualAmount = Math.floor(priceTable.totalPrice / totalMembers);
+        const remainingAmount = priceTable.totalPrice - (eachIndividualAmount * (priceTable.paidBy.length + 1));
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -41,7 +48,9 @@ export async function POST(
             data: {
                 paidBy: {
                     connect: { id: userId }
-                }
+                },
+                amountRemaining: remainingAmount,
+                fullPaid: remainingAmount === 0
             },
             include: {
                 paidBy: true

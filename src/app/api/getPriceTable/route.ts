@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
             },
             include: {
                 members: true,
+                paidBy: true
             },
         });
 

@@ -15,6 +15,7 @@ CREATE TABLE "PriceTable" (
     "fullPaid" BOOLEAN NOT NULL DEFAULT false,
     "description" TEXT NOT NULL,
     "creatorId" INTEGER NOT NULL,
+    "amountRemaining" INTEGER NOT NULL,
 
     CONSTRAINT "PriceTable_pkey" PRIMARY KEY ("id")
 );
