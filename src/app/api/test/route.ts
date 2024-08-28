@@ -3,22 +3,23 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { userId } = await request.json();
 
-    if (!email) {
-      return NextResponse.json({ error: 'User email is required' }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    // Fetch all price tables where the user is a member but hasn't paid
     const unpaidPriceTables = await prisma.priceTable.findMany({
       where: {
         members: {
           some: {
-            email:email
+            id: userId
           }
         },
         paidBy: {
           none: {
-            email: email
+            id: userId
           }
         }
       },
@@ -45,9 +46,10 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Remove sensitive information and prepare the response
     const safePriceTables = unpaidPriceTables.map(table => ({
       ...table,
-      paidBy: undefined, 
+      paidBy: undefined, // Remove paidBy list for privacy
       unpaidCount: table.members.length - table.paidBy.length,
       paidCount: table.paidBy.length,
     }));

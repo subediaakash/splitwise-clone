@@ -32,7 +32,6 @@ function Page({ params }: { params: { id: number } }) {
 
     return (
         <div>
-            hiii
             {<PaymentPortal userId={userId} priceTableId={params.id} />}
         </div>
     )

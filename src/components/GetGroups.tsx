@@ -38,25 +38,24 @@ function GetGroups() {
   }, [])
 
   return (
-    <div className="flex justify-center">
-      <div className="w-[30vw] space-y-4">
+    <div className="flex justify-center ">
+      <div className="lg:w-[35vw] space-y-4">
         {priceTables.map((priceTable) => {
           // Calculate the amount to pay for each member
           const amountToPay = (priceTable.totalPrice / priceTable.members.length).toFixed(2);
           return (
-            <Card key={priceTable.id}>
+            <Card key={priceTable.id} className="bg-[#071a2b] text-white">
               <div className="w-[29vw] flex justify-end items-end">
-                <button className="p-3"><IoMdRemoveCircleOutline /></button>
               </div>
               <CardHeader>
-                <CardTitle>Bill Summary - {priceTable.description}</CardTitle>
-                <CardDescription>Review the details of your bill and the amounts owed by each person.</CardDescription>
+                <CardTitle className="text-white">Bill Summary - {priceTable.description}</CardTitle>
+                <CardDescription className="text-slate-400">Please make sure you were the part of group or not before paying.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
-                    <span>Total Bill</span>
-                    <span className="font-medium">${priceTable.totalPrice.toFixed(2)}</span>
+                    <span className="font-semibold">Total Bill</span>
+                    <span className="font-semibold">${priceTable.totalPrice.toFixed(2)}</span>
                   </div>
                   <Separator />
                 </div>
@@ -64,17 +63,17 @@ function GetGroups() {
                   {priceTable.members.map((member) => (
                     <div key={member.id} className="flex items-center justify-between">
                       <span>{member.name}</span>
-                      <span className="font-medium">${amountToPay}</span>
+                      <span className="font-medium text-slate-600">${amountToPay}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div>
-                  <p className="text-gray-600">{priceTable.fullPaid ? "Fully Paid" : "Not Fully Paid"}</p>
-                  <p>Remaining Amount: ${priceTable.amountRemaining.toFixed(2)}</p>
+                  <p className="text-gray-400">{priceTable.fullPaid ? "Fully Paid" : "Not Fully Paid"}</p>
+                  <p>Remaining Amount : <span className="text-red-700 font-semibold">${priceTable.amountRemaining.toFixed(2)}</span></p>
                 </div>
-                <Button onClick={() => router.push(`/pay/${priceTable.id}`)}>
+                <Button onClick={() => router.push(`/info/${priceTable.id}`)} className="text-white border font-semibold">
                   Pay now
                 </Button>
               </CardFooter>

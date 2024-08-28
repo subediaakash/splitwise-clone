@@ -18,7 +18,7 @@ export default function RootLayout({ children }: Readonly<{
       <head />
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-[#37393b] font-sans antialiased",
           fontSans.variable
         )}
       >

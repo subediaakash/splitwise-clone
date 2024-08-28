@@ -1,7 +1,8 @@
+import { MdCardMembership } from "react-icons/md";
 import React, { useEffect, useState } from 'react'
 
 function PaymentPortal({ userId, priceTableId }: any) {
-    const [data, setData] = useState<any | null>(null)  // Start with null
+    const [data, setData] = useState<any | null>(null)  
 
     useEffect(() => {
         const fetchPaymentTable = async () => {
@@ -15,7 +16,7 @@ function PaymentPortal({ userId, priceTableId }: any) {
 
             const result = await response.json()
             console.log(result)
-            setData(result)  // Set the fetched data
+            setData(result)  
         }
 
         fetchPaymentTable()
@@ -23,20 +24,33 @@ function PaymentPortal({ userId, priceTableId }: any) {
 
     const individualAmount = data ? (data.totalPrice / data.members.length).toFixed(2) : '0.00'
 
-    // Fix: Use a variable to hold the payment status logic
-    const isFullyPaid = data?.fullpaid; // Check for data existence before accessing fullpaid
-
+    const isFullyPaid = data?.fullpaid; 
+    function capitalizeFirstLetter(string: string): string {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
     return (
-        <div>
-            <div>
+        <div className='flex justify-center items-center lg:h-[90vh]'>
+            <div className='border lg:w-[40vw] lg:h-[50vh] p-4 bg-[#15324d]'>
                 <div>
-                    <p>Total Amount: {data ? data.totalPrice : 'Loading...'}</p>
-                    <p>Individual Amount: {individualAmount}</p>
-                    <div>
-                        <p>Members</p>
-                        {data?.members.map((member) => { return <h1>{member.name}</h1> })}
+                    <div className='flex justify-center font-bold text-2xl p-7'>
+                        <p className='text-[#c4def5]'>TABLE DESCRIPTION</p>
                     </div>
-                    <p>Payment Status : {isFullyPaid ? <>Fully Paid</> : <>Not Paid</>}</p>
+                    <div className='pl-4 flex flex-col gap-2 font-mono'>
+                    <p className='text-white text-xl font-semibold'>Total Amount : {data ? data.totalPrice : 'Loading...'}</p>
+                    <p className='text-white text-xl font-semibold'>Individual Amount : {individualAmount}</p>
+                    <p className='text-white text-xl font-medium'>Description : {data ? data.description : 'Loading...'}</p>
+                    </div>
+                    <div className='flex justify-center flex-col  text-2xl p-7'>
+                        <div className="flex items-center gap-2">
+                        <p className='text-white font-bold font-mono'>Members  </p>
+                        <MdCardMembership color="white"/> 
+                        </div>
+                        {data?.members.map((member:any) => { return <h1 className="text-white pl-3 font-mono text-base">{capitalizeFirstLetter(member.name)}</h1> })}
+                    </div >
+                    <div className="flex justify-between p-4">
+                    <p className="text-white p-2 border ">Payment Status : {isFullyPaid ? <span className="text-green-400">Fully Paid</span> : <span className="text-red-500">Not Paid</span>}</p>
+                    <p><button className="border p-2 text-white font-semibold hover:opacity-80">Pay Now</button></p>
+                    </div>
                 </div>
             </div>
         </div>

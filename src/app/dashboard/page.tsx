@@ -5,15 +5,11 @@ import GetGroups from '@/components/GetGroups'
 async function page() {
   const session = await getServerSession()
   return (
-    // <div>
-    //     {session?.user?.email}
-    //   Groups Created By You
-    //   <GetGroups/>
-    //   Group that you are in 
-
-    // </div>
+    
     <div>
-      THis is the dashboard
+      <div className='flex justify-center p-6 uppercase font-mono font-extrabold text-2xl text-white shadow-sm'>
+        Groups that you are in 
+      </div>
       <GetGroups />
     </div>
   )

@@ -32,7 +32,7 @@ async function Page() {
     }));
 
     return (
-      <div>
+      <div className=" flex flex-col h-[100%]">
         <CreateGroupForm users={users} creatorId={currentUser?.id} />
       </div>
     );
