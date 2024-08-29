@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/card"
 import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
-import { IoMdRemoveCircleOutline } from "react-icons/io"
+import DefaultNoGroup from "./DefaultNoGroup"
 
 function GetGroups() {
   const [priceTables, setPriceTables] = useState([])
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true)
       const session = await getSession()
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/getPriceTable`, {
         method: 'POST',
@@ -30,18 +32,24 @@ function GetGroups() {
       });
       const data = await response.json()
       console.log('Data fetched:', data);
-      // Filter out tables where the user has already paid
-      const unpaidTables = data.filter(table => !table.userHasPaid);
-      setPriceTables(unpaidTables)
+      
+      const unpaidTables = data.filter(table => !table.userHasPaid);      setPriceTables(unpaidTables)
+      setLoading(false)
     }
     fetchData()
   }, [])
 
+  if (loading) {
+    return <div>Loading...</div>  
+  }
+
+  if (priceTables.length === 0) {
+    return <DefaultNoGroup />
+  }
   return (
     <div className="flex justify-center ">
       <div className="lg:w-[35vw] space-y-4">
         {priceTables.map((priceTable) => {
-          // Calculate the amount to pay for each member
           const amountToPay = (priceTable.totalPrice / priceTable.members.length).toFixed(2);
           return (
             <Card key={priceTable.id} className="bg-[#071a2b] text-white">

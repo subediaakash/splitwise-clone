@@ -1,5 +1,6 @@
 import { MdCardMembership } from "react-icons/md";
 import React, { useEffect, useState } from 'react'
+import ConfirmPay from "./ConfirmPay";
 
 function PaymentPortal({ userId, priceTableId }: any) {
     const [data, setData] = useState<any | null>(null)  
@@ -49,7 +50,8 @@ function PaymentPortal({ userId, priceTableId }: any) {
                     </div >
                     <div className="flex justify-between p-4">
                     <p className="text-white p-2 border ">Payment Status : {isFullyPaid ? <span className="text-green-400">Fully Paid</span> : <span className="text-red-500">Not Paid</span>}</p>
-                    <p><button className="border p-2 text-white font-semibold hover:opacity-80">Pay Now</button></p>
+                    <p></p>
+                    <ConfirmPay triggerName="Pay now" userId={userId} tableId={priceTableId} />
                     </div>
                 </div>
             </div>
