@@ -75,38 +75,50 @@ function PriceTableCard({ priceTable, router }: any) {
   ).toFixed(2);
 
   return (
-    <Card className="bg-primary text-primary-foreground">
-      <CardHeader>
-        <CardTitle>Bill Summary - {priceTable.description}</CardTitle>
-        <CardDescription className="text-primary-foreground/70">
+    <Card className="overflow-hidden shadow-lg mt-3">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+        <CardTitle className="text-xl font-semibold">
+          Bill Summary - {priceTable.description}
+        </CardTitle>
+        <CardDescription className="text-white/80">
           Please confirm your group membership before paying.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex items-center justify-between font-semibold">
-          <span>Total Bill</span>
-          <span>${priceTable.totalPrice.toFixed(2)}</span>
+
+      <CardContent className="p-6 space-y-6 bg-gradient-to-b from-slate-50 to-white">
+        {/* Total Bill Section */}
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between font-semibold">
+            <span className="text-blue-700">Total Bill</span>
+            <span className="text-blue-700 text-lg">
+              ${priceTable.totalPrice.toFixed(2)}
+            </span>
+          </div>
         </div>
-        <Separator className="bg-primary-foreground/20" />
+
+        <Separator className="bg-gray-200" />
+
         <div className="grid gap-2">
           {priceTable.members.map((member: any) => (
-            <div key={member.id} className="flex items-center justify-between">
-              <span>{member.name}</span>
-              <span className="font-medium text-primary-foreground/70">
-                ${amountToPay}
-              </span>
+            <div
+              key={member.id}
+              className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100"
+            >
+              <span className="text-gray-700">{member.name}</span>
+              <span className="font-medium text-blue-600">${amountToPay}</span>
             </div>
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div>
-          <p className="text-primary-foreground/70">
+
+      <CardFooter className="p-6 bg-gray-50 border-t flex justify-between items-center">
+        <div className="space-y-1">
+          <p className="text-gray-600">
             {priceTable.fullPaid ? "Fully Paid" : "Not Fully Paid"}
           </p>
           <p>
             Remaining Amount:{" "}
-            <span className="text-red-400 font-semibold">
+            <span className="text-red-500 font-semibold">
               ${priceTable.amountRemaining.toFixed(2)}
             </span>
           </p>
@@ -114,7 +126,7 @@ function PriceTableCard({ priceTable, router }: any) {
         <Button
           onClick={() => router.push(`/info/${priceTable.id}`)}
           variant="secondary"
-          className="font-semibold"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           Pay now
         </Button>
