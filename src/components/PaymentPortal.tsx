@@ -31,10 +31,10 @@ function PaymentPortal({ userId, priceTableId }: any) {
     }
     return (
         <div className='flex justify-center items-center lg:h-[90vh]'>
-            <div className='border lg:w-[40vw] lg:h-[50vh] p-4 bg-[#15324d]'>
+            <div className='border lg:w-[40vw] lg:h-[60vh] p-4 bg-[#15324d]'>
                 <div>
                     <div className='flex justify-center font-bold text-2xl p-7'>
-                        <p className='text-[#c4def5]'>TABLE DESCRIPTION</p>
+                        <p className='text-[#dae7f2]'>TABLE DESCRIPTION</p>
                     </div>
                     <div className='pl-4 flex flex-col gap-2 font-mono'>
                     <p className='text-white text-xl font-semibold'>Total Amount : {data ? data.totalPrice : 'Loading...'}</p>
@@ -49,9 +49,9 @@ function PaymentPortal({ userId, priceTableId }: any) {
                         {data?.members.map((member:any) => { return <h1 className="text-white pl-3 font-mono text-base">{capitalizeFirstLetter(member.name)}</h1> })}
                     </div >
                     <div className="flex justify-between p-4">
-                    <p className="text-white p-2 border ">Payment Status : {isFullyPaid ? <span className="text-green-400">Fully Paid</span> : <span className="text-red-500">Not Paid</span>}</p>
+                    <p className="text-white p-2 border font-semibold ">Payment Status : {isFullyPaid ? <span className="text-green-400">Fully Paid</span> : <span className="text-red-500">Not Paid</span>}</p>
                     <p></p>
-                    <ConfirmPay triggerName="Pay now" userId={userId} tableId={priceTableId} />
+                    <ConfirmPay  triggerName="Pay now" userId={userId} tableId={priceTableId} />
                     </div>
                 </div>
             </div>

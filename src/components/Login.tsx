@@ -47,7 +47,7 @@ export default function Login() {
   }
   return (
     <form onSubmit={handleSubmit}>
-      <div className="mx-auto max-w-[400px] space-y-6">
+      <div className="mx-auto max-w-[600px] p-9 space-y-6 bg-white h-[50vh] w-[50vw]">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Login</h1>
           <p className="text-gray-500 dark:text-gray-400">
@@ -75,7 +75,7 @@ export default function Login() {
 
           <div className="mt-4 text-center text-sm">
             Don't have an account yet?
-            <Link className="underline" href="#">
+            <Link className="underline" href="/signup">
               Sign Up
             </Link>
           </div>

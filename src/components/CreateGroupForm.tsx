@@ -1,8 +1,9 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,18 +15,27 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRouter } from "next/navigation";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 const signupFormSchema = z.object({
   totalPrice: z.string().transform((val) => Number(val)),
-  description: z.string(),
-  members: z.array(z.number()),
+  description: z.string().min(1, "Description is required"),
+  members: z.array(z.number()).min(1, "Select at least one member"),
 });
 
-export default function CreateGroupForm({ users, creatorId }: any) {
+type FormValues = z.infer<typeof signupFormSchema>;
+
+export default function CreateGroupForm({
+  users,
+  creatorId,
+}: {
+  users: any[];
+  creatorId: number;
+}) {
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof signupFormSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
       totalPrice: 0,
@@ -34,63 +44,65 @@ export default function CreateGroupForm({ users, creatorId }: any) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof signupFormSchema>) {
+  async function onSubmit(values: FormValues) {
     const apiBody = {
       creatorId: creatorId,
-      totalPrice: Number(values.totalPrice),
+      totalPrice: values.totalPrice,
       memberIds: values.members,
       description: values.description,
     };
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/create`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiBody),
-      }
-    );
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiBody),
+        }
+      );
 
-    console.log("Form submitted with values:", apiBody);
-    router.push("/dashboard");
+      if (!response.ok) {
+        throw new Error("Failed to create group");
+      }
+
+      console.log("Form submitted successfully:", apiBody);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // Handle error (e.g., show error message to user)
+    }
   }
 
   function capitalizeFirstLetter(string: string): string {
     return string.charAt(0).toUpperCase() + string.slice(1);
-}
+  }
 
   return (
-    <>
-      <main className="flex justify-center   ">
-        <div className="p-9 sm:w-[90vw] lg:w-[40vw] bg-white border-2 shadow-2xl shadow-[#abbede] border-gray-200 mt-9 lg:mt-32  flex flex-col gap-2 justify-center items-center">
-          <div>
-            <p className="font-extrabold text-xl text-red-700">CREATE GROUP</p>
-          </div>
-          <div className="sm:w-[90vw] lg:w-[28vw]">
-            <p className="flex  text-gray-500 p-2">
-              Where did you spend hmm ?{" "}
-            </p>
-          </div>
+    <main className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center text-primary">
+            Create Group
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8 max-w-lg w-full"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="totalPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-lg font-semibold">
-                      Total Bill
-                    </FormLabel>
+                    <FormLabel>Total Bill</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter total bill amount"
                         type="number"
                         {...field}
+                        className="focus:ring-primary"
                       />
                     </FormControl>
                     <FormMessage />
@@ -103,11 +115,13 @@ export default function CreateGroupForm({ users, creatorId }: any) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-lg font-semibold">
-                      Description
-                    </FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="What is this bill for?" {...field} />
+                      <Textarea
+                        placeholder="What is this bill for?"
+                        {...field}
+                        className="focus:ring-primary"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -119,58 +133,52 @@ export default function CreateGroupForm({ users, creatorId }: any) {
                 name="members"
                 render={() => (
                   <FormItem>
-                    <FormLabel className="text-lg font-semibold">
-                      Select Group Members
-                    </FormLabel>
-                    <FormControl>
-                      <Controller
-                        name="members"
-                        control={form.control}
-                        render={({ field }) => (
-                          <>
-                            {users.map((user: any) => (
-                              <FormItem
-                                key={user.id}
-                                className="flex items-center space-x-3"
-                              >
-                                <Checkbox
-                                  checked={field.value.includes(user.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([
-                                        ...field.value,
-                                        parseInt(user.id),
-                                      ]);
-                                    } else {
-                                      field.onChange(
-                                        field.value.filter(
-                                          (id: number) => id !== user.id
-                                        )
-                                      );
-                                    }
-                                  }}
-                                />
-                                <FormLabel>
-                                  {capitalizeFirstLetter(user.name)}
-                                </FormLabel>{" "}
-                              </FormItem>
-                            ))}
-                          </>
-                        )}
-                      />
-                    </FormControl>
+                    <FormLabel>Select Group Members</FormLabel>
+                    <div className="space-y-2">
+                      {users.map((user) => (
+                        <div
+                          key={user.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`user-${user.id}`}
+                            checked={form.watch("members").includes(user.id)}
+                            onCheckedChange={(checked) => {
+                              const currentMembers = form.getValues("members");
+                              if (checked) {
+                                form.setValue("members", [
+                                  ...currentMembers,
+                                  user.id,
+                                ]);
+                              } else {
+                                form.setValue(
+                                  "members",
+                                  currentMembers.filter((id) => id !== user.id)
+                                );
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`user-${user.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {capitalizeFirstLetter(user.name)}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="font-semibold shadow-xl">
-                SUBMIT
+              <Button type="submit" className="w-full">
+                Create Group
               </Button>
             </form>
           </Form>
-        </div>
-      </main>
-    </>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
