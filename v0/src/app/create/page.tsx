@@ -3,36 +3,40 @@ import prisma from "@/db";
 import { getServerSession } from "next-auth";
 
 async function Page() {
+  const session = await getServerSession();
 
-  const session = await getServerSession()
+  const user = session?.user?.email;
+  const currentUser = await prisma.user.findUnique({ where: { email: user! } });
 
-  const user = session?.user?.email
-  const currentUser = await prisma.user.findUnique({ where: { email: user! } })
-
-
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/getusers`, {
-    cache: 'no-store'
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/getusers`,
+    {
+      cache: "no-store",
+      
+    }
+  );
+  console.log(response.formData);
 
   if (!response.ok) {
-    console.error('Failed to fetch data:', response.status);
-    throw new Error('Failed to fetch data');
+    console.log(response);
+    console.error("Failed to fetch data:", response.status);
+    throw new Error("Failed to fetch data");
   }
 
   const text = await response.text();
-  console.log('Response Text:', text);
+  console.log("Response Text:", text);
 
   try {
     const data = JSON.parse(text);
 
-    const users = data.map((user: { id: number, name: string }) => ({
+    const users = data.map((user: { id: number; name: string }) => ({
       id: user.id,
       name: user.name,
     }));
 
     return (
       <div className=" flex flex-col h-[100%]">
+        //@ts-ignore
         <CreateGroupForm users={users} creatorId={currentUser?.id} />
       </div>
     );

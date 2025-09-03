@@ -10,12 +10,27 @@ import { Badge } from "@/components/ui/badge";
 import { Users, CreditCard, Info } from "lucide-react";
 import ConfirmPay from "./ConfirmPay";
 
-function PaymentPortal({ userId, priceTableId }: any) {
-  const [data, setData] = useState(null);
+interface Member {
+  id: number;
+  name: string;
+}
+
+interface PaymentData {
+  totalPrice: number;
+  fullPaid: boolean;
+  description: string;
+  members: Member[];
+}
+
+interface PaymentPortalProps {
+  userId: number;
+  priceTableId: number;
+}
+
+function PaymentPortal({ userId, priceTableId }: PaymentPortalProps) {
+  const [data, setData] = useState<PaymentData | null>(null);
 
   useEffect(() => {
-    // @ts-ignore
-
     const fetchPaymentTable = async () => {
       const response = await fetch(
         `http://localhost:3000/api/getPriceTable/${priceTableId}`,
@@ -27,22 +42,26 @@ function PaymentPortal({ userId, priceTableId }: any) {
           body: JSON.stringify({ userId }),
         }
       );
-      const result = await response.json();
-      setData(result);
+
+      if (response.ok) {
+        const result: PaymentData = await response.json();
+        setData(result);
+      } else {
+        console.error("Failed to fetch payment table data.");
+      }
     };
+
     fetchPaymentTable();
   }, [priceTableId, userId]);
+
   const individualAmount = data
-    ? // @ts-ignore
-
-      (data.totalPrice / data.members.length).toFixed(2)
+    ? (data.totalPrice / data.members.length).toFixed(2)
     : "0.00";
-  // @ts-ignore
 
-  const isFullyPaid = data?.fullpaid;
+  const isFullyPaid = data?.fullPaid || false;
 
   function capitalizeFirstLetter(string: string) {
-    return string?.charAt(0).toUpperCase() + string?.slice(1);
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   return (
@@ -102,9 +121,9 @@ function PaymentPortal({ userId, priceTableId }: any) {
                   <span className="font-semibold">Members</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {data.members.map((member, index) => (
+                  {data.members.map((member) => (
                     <div
-                      key={index}
+                      key={member.id}
                       className="flex items-center gap-2 bg-white p-2 rounded"
                     >
                       <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
@@ -123,7 +142,7 @@ function PaymentPortal({ userId, priceTableId }: any) {
 
         <CardFooter className="bg-gray-50 p-4 flex justify-between items-center rounded-b-lg">
           <Badge
-            variant={isFullyPaid ? "success" : "destructive"}
+            variant={isFullyPaid ? "secondary" : "destructive"}
             className={`px-4 py-2 ${
               isFullyPaid
                 ? "bg-green-100 text-green-700"
@@ -132,6 +151,7 @@ function PaymentPortal({ userId, priceTableId }: any) {
           >
             {isFullyPaid ? "Fully Paid" : "Payment Required"}
           </Badge>
+
           <ConfirmPay
             triggerName="Pay now"
             userId={userId}
