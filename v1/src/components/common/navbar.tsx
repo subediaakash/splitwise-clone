@@ -2,11 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [progress, setProgress] = useState(0);
     const [atTop, setAtTop] = useState(true);
+
+    const { data: session, isPending } = authClient.useSession();
+    const isLoggedIn = !!session;
 
     useEffect(() => {
         const onScroll = () => {
@@ -29,17 +33,42 @@ export default function Navbar() {
                         <Link href="/">Splitwise Pro</Link>
                     </h1>
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden md:flex gap-8 text-lg font-medium">
-                        <a href="#features" className="hover:text-[#123458] transition-colors">Features</a>
-                        <a href="#pricing" className="hover:text-[#123458] transition-colors">Pricing</a>
-                        <a href="#faq" className="hover:text-[#123458] transition-colors">FAQ</a>
-                    </nav>
+                    {/* Desktop: default navbar when logged out */}
+                    {!isLoggedIn && (
+                        <nav className="hidden md:flex gap-8 text-lg font-medium">
+                            <a href="#features" className="hover:text-[#123458] transition-colors">Features</a>
+                            <a href="#pricing" className="hover:text-[#123458] transition-colors">Pricing</a>
+                            <a href="#faq" className="hover:text-[#123458] transition-colors">FAQ</a>
+                        </nav>
+                    )}
 
-                    <div className="hidden md:block">
-                        <Button className="bg-[#123458] text-[#F1EFEC] rounded-2xl px-6 py-2 hover:opacity-90 shadow-lg hover:shadow-xl transition-all" asChild>
-                            <Link href="/signup">Get Started</Link>
-                        </Button>
+                    {/* Desktop: pill segmented navbar when logged in */}
+                    {isLoggedIn && (
+                        <div className="hidden md:flex flex-1 justify-center">
+                            <div className="glass border rounded-2xl p-1 flex items-center gap-1">
+                                {[{ label: "Transactions", href: "#" }, { label: "History", href: "#" }, { label: "Groups", href: "#" }, { label: "Profile", href: "#" }].map((item) => (
+                                    <Link key={item.label} href={item.href} className="px-4 py-2 rounded-xl text-sm md:text-base hover:bg-black/5 transition-colors">
+                                        {item.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="hidden md:flex items-center gap-3">
+                        {!isLoggedIn && (
+                            <>
+                                <Button variant="outline" className="rounded-2xl px-6 py-2 border-2 border-[#123458] text-[#123458] hover:bg-[#123458] hover:text-[#F1EFEC] transition-all" asChild>
+                                    <Link href="/signin">Login</Link>
+                                </Button>
+                                <Button className="bg-[#123458] text-[#F1EFEC] rounded-2xl px-6 py-2 hover:opacity-90 shadow-lg hover:shadow-xl transition-all" asChild>
+                                    <Link href="/signup">Get Started</Link>
+                                </Button>
+                            </>
+                        )}
+                        {isLoggedIn && (
+                            <></>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -59,12 +88,26 @@ export default function Navbar() {
             {/* Mobile Menu */}
             {isOpen && (
                 <div className="absolute left-0 right-0 glass border mx-4 mt-2 rounded-2xl p-6 flex flex-col items-center gap-6 text-xl z-50 animate-fade-in">
-                    <a href="#features" className="hover:text[#123458]" onClick={() => setIsOpen(false)}>Features</a>
-                    <a href="#pricing" className="hover:text-[#123458]" onClick={() => setIsOpen(false)}>Pricing</a>
-                    <a href="#faq" className="hover:text-[#123458]" onClick={() => setIsOpen(false)}>FAQ</a>
-                    <Button className="bg-[#123458] text-[#F1EFEC] rounded-2xl px-6 py-3 mt-2" asChild>
-                        <Link href="/signup" onClick={() => setIsOpen(false)}>Get Started</Link>
-                    </Button>
+                    {!isLoggedIn && (
+                        <>
+                            <a href="#features" className="hover:text-[#123458]" onClick={() => setIsOpen(false)}>Features</a>
+                            <a href="#pricing" className="hover:text-[#123458]" onClick={() => setIsOpen(false)}>Pricing</a>
+                            <a href="#faq" className="hover:text-[#123458]" onClick={() => setIsOpen(false)}>FAQ</a>
+                            <Button variant="outline" className="w-full rounded-2xl border-2 border-[#123458] text-[#123458]" asChild>
+                                <Link href="/signin" onClick={() => setIsOpen(false)}>Login</Link>
+                            </Button>
+                            <Button className="w-full bg-[#123458] text-[#F1EFEC] rounded-2xl px-6 py-3" asChild>
+                                <Link href="/signup" onClick={() => setIsOpen(false)}>Get Started</Link>
+                            </Button>
+                        </>
+                    )}
+                    {isLoggedIn && (
+                        <div className="w-full flex flex-col items-stretch gap-3">
+                            {["Transactions", "History", "Groups", "Profile"].map((label) => (
+                                <button key={label} className="w-full px-4 py-3 rounded-xl hover:bg-black/5 text-left">{label}</button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </header>
