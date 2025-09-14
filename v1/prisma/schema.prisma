@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,16 +9,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/**
+ * ===========================
+ * USER & AUTH MODELS
+ * ===========================
+ */
+
 model User {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   name          String
-  email         String
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
   sessions      Session[]
   accounts      Account[]
+  groupMembers  GroupMember[]
+  expenses      Expense[]            @relation("CreatedExpenses")
+  expenseShares ExpenseParticipant[]
+  payments      Payment[]            @relation("UserPayments")
 
   @@map("user")
 }
@@ -31,15 +38,15 @@ model User {
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  token     String   @unique
   ipAddress String?
   userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([token])
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("session")
 }
 
@@ -68,7 +75,138 @@ model Verification {
   value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @updatedAt
 
   @@map("verification")
+}
+
+/**
+ * ===========================
+ * GROUP & MEMBERSHIP MODELS
+ * ===========================
+ */
+
+enum GroupRole {
+  CREATOR
+  MEMBER
+}
+
+enum Currency {
+  USD
+  EUR
+  INR
+  GBP
+  OTHER
+}
+
+enum SettlementStatus {
+  CLEAR
+  PARTIALLY_CLEAR
+  UNPAID
+}
+
+model Group {
+  id               String           @id @default(uuid())
+  name             String
+  description      String?
+  image            String?
+  settlementStatus SettlementStatus @default(UNPAID)
+  currency         Currency         @default(INR)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  groupMembers GroupMember[]
+  expenses     Expense[]
+  payments     Payment[]
+
+  @@map("group")
+}
+
+model GroupMember {
+  id       String    @id @default(uuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId]) // prevents duplicates
+  @@index([userId])
+  @@map("group_member")
+}
+
+/**
+ * ===========================
+ * EXPENSE & SPLITTING MODELS
+ * ===========================
+ */
+
+enum ExpenseSplitType {
+  EQUAL // Everyone pays equal share
+  PERCENTAGE // Percent split
+  EXACT // Custom amounts per participant
+}
+
+model Expense {
+  id          String           @id @default(uuid())
+  groupId     String? // null if it's a personal expense
+  description String
+  amount      Decimal          @db.Decimal(10, 2)
+  currency    Currency         @default(INR)
+  splitType   ExpenseSplitType @default(EQUAL)
+  createdById String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  group        Group?               @relation(fields: [groupId], references: [id])
+  createdBy    User                 @relation("CreatedExpenses", fields: [createdById], references: [id])
+  participants ExpenseParticipant[]
+
+  @@index([groupId])
+  @@map("expense")
+}
+
+model ExpenseParticipant {
+  id        String  @id @default(uuid())
+  expenseId String
+  userId    String
+  share     Decimal @db.Decimal(10, 2) // exact share owed by user
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, userId]) // each user once per expense
+  @@map("expense_participant")
+}
+
+/**
+ * ===========================
+ * PAYMENT / RAZORPAY INTEGRATION
+ * ===========================
+ */
+
+model Payment {
+  id                String   @id @default(uuid())
+  groupId           String
+  userId            String
+  totalAmount       Decimal  @db.Decimal(10, 2)
+  currency          Currency @default(INR)
+  status            String   @default("created") // created, captured, failed, refunded
+  razorpayOrderId   String? // from Razorpay
+  razorpayPaymentId String? // from Razorpay
+  razorpaySignature String? // for signature verification
+  attachmentUrl     String? // optional receipt upload
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer User  @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([userId])
+  @@map("payment")
 }
