@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, CheckCircle2, Quote, Users, PieChart, ShieldCheck, Wallet } from "lucide-react";
-import Navbar from "./navbar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -31,7 +30,6 @@ export default function LandingPage() {
             <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#123458]/20 rounded-full blur-3xl animate-blob" />
             <div className="absolute top-40 -right-24 w-80 h-80 bg-[#6aa3d6]/20 rounded-full blur-3xl animate-blob" />
 
-            <Navbar />
 
             {/* Hero Section */}
             <section className="relative flex flex-col items-center justify-center text-center px-6 pt-24 md:pt-32 pb-20">

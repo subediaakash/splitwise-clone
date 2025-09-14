@@ -1,15 +1,19 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+    const pathname = usePathname();
+
     const [isOpen, setIsOpen] = useState(false);
     const [progress, setProgress] = useState(0);
     const [atTop, setAtTop] = useState(true);
 
-    const { data: session, isPending } = authClient.useSession();
+    const { data: session,  } = authClient.useSession();
     const isLoggedIn = !!session;
 
     useEffect(() => {
@@ -24,6 +28,9 @@ export default function Navbar() {
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
+
+    const shouldHide = pathname?.startsWith("/signin") || pathname?.startsWith("/signup");
+    if (shouldHide) return null;
 
     return (
         <header className={`sticky top-0 z-50 ${atTop ? "" : "shadow-md"}`}>
@@ -46,7 +53,7 @@ export default function Navbar() {
                     {isLoggedIn && (
                         <div className="hidden md:flex flex-1 justify-center">
                             <div className="glass border rounded-2xl p-1 flex items-center gap-1">
-                                {[{ label: "Transactions", href: "#" }, { label: "History", href: "#" }, { label: "Groups", href: "#" }, { label: "Profile", href: "#" }].map((item) => (
+                                {[{ label: "Dashboard", href: "/dashboard" }, { label: "History", href: "#" }, { label: "Groups", href: "#" }, { label: "Profile", href: "#" }].map((item) => (
                                     <Link key={item.label} href={item.href} className="px-4 py-2 rounded-xl text-sm md:text-base hover:bg-black/5 transition-colors">
                                         {item.label}
                                     </Link>

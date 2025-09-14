@@ -13,12 +13,20 @@ import { Separator } from "@/components/ui/separator";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { authClient } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
 
 export default function Signin() {
-    const handleGoogleSignin = () => {
-        // Replace with your auth library's call, e.g.:
-        // signIn("google", { callbackUrl: "/dashboard" });
-        console.log("Google sign-in clicked");
+    const handleGoogleSignin = async() => {
+        const data = await authClient.signIn.social({
+            provider: "google",
+          });
+          if (data.error){
+            window.alert("SIGNUP FAILED")
+          }else{
+            redirect("/")
+
+          }
     };
 
     return (
