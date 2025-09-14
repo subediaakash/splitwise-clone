@@ -58,3 +58,21 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ error: "Failed to create group" }, { status: 500 })
     }
 }
+
+export const GET = async ()=>{
+    const session = await auth.api.getSession({ headers: await headers() })
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+   // to get the groups in which the user is 
+   const groups = prisma.group.findMany({where:{
+    groupMembers:{
+        some:{
+            userId: session.user.id
+        }   
+    }
+   }})
+
+   return NextResponse.json({ groups }, { status: 200 })
+
+}
