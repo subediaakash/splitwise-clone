@@ -53,7 +53,7 @@ export default function Navbar() {
                     {isLoggedIn && (
                         <div className="hidden md:flex flex-1 justify-center">
                             <div className="glass border rounded-2xl p-1 flex items-center gap-1">
-                                {[{ label: "Dashboard", href: "/dashboard" }, { label: "History", href: "#" }, { label: "Groups", href: "#" }, { label: "Profile", href: "#" }].map((item) => (
+                                {[{ label: "Dashboard", href: "/dashboard" }, { label: "History", href: "#" }, { label: "Groups", href: "/groups" }, { label: "Profile", href: "#" }].map((item) => (
                                     <Link key={item.label} href={item.href} className="px-4 py-2 rounded-xl text-sm md:text-base hover:bg-black/5 transition-colors">
                                         {item.label}
                                     </Link>

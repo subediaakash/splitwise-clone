@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,14 +14,6 @@ type Group = {
     selfCreated: boolean;
     createdAt: string; // ISO
 };
-
-const sampleGroups: Group[] = [
-    { id: "1", name: "Vacations Group", status: "unpaid", selfCreated: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
-    { id: "2", name: "Taxi Group", status: "partiallyPaid", selfCreated: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
-    { id: "3", name: "Office Lunch", status: "paid", selfCreated: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString() },
-    { id: "4", name: "Flatmates", status: "unpaid", selfCreated: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString() },
-    { id: "5", name: "Trip to Goa", status: "partiallyPaid", selfCreated: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() },
-];
 
 export type SortKey = "time" | "selfCreated" | "unpaid" | "partiallyPaid" | "paid";
 
@@ -43,10 +35,41 @@ export default function GroupsList({ variant = "list", title, className }: Group
     const [sortBy, setSortBy] = useState<SortKey>("time");
     const [query, setQuery] = useState("");
 
+    const [serverGroups, setServerGroups] = useState<Group[] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchGroups = async () => {
+            try {
+                setIsLoading(true);
+                const res = await fetch("/api/groups", { method: "GET" });
+                if (!res.ok) throw new Error("Failed to fetch groups");
+                const data: { groups: Group[] } = await res.json();
+                if (!isMounted) return;
+                setServerGroups(data.groups ?? []);
+                setError(null);
+            } catch (error) {
+                console.log(error)
+                if (!isMounted) return;
+                setError("Failed to load groups");
+                setServerGroups([]);
+            } finally {
+                if (isMounted) setIsLoading(false);
+            }
+        };
+        fetchGroups();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return q ? sampleGroups.filter((g) => g.name.toLowerCase().includes(q)) : sampleGroups;
-    }, [query]);
+        const base = serverGroups ?? [];
+        return q ? base.filter((g) => g.name.toLowerCase().includes(q)) : base;
+    }, [query, serverGroups]);
 
     const groups = useMemo(() => {
         const arr = [...filtered];
@@ -97,7 +120,13 @@ export default function GroupsList({ variant = "list", title, className }: Group
 
             {title && <h3 className="text-base font-semibold mb-3">{title}</h3>}
 
-            {variant === "grid" ? (
+            {isLoading ? (
+                <div className="text-sm text-[#5c5c5c]">Loading groups...</div>
+            ) : serverGroups && serverGroups.length === 0 ? (
+                <div className="text-sm text-[#5c5c5c]">You have no groups yet.</div>
+            ) : groups.length === 0 ? (
+                <div className="text-sm text-[#5c5c5c]">No groups match your search.</div>
+            ) : variant === "grid" ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {groups.map((g) => (
                         <GroupCard key={g.id} group={g} />

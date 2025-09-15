@@ -138,6 +138,9 @@ model GroupMember {
   @@map("group_member")
 }
 
+
+
+
 /**
  * ===========================
  * EXPENSE & SPLITTING MODELS
