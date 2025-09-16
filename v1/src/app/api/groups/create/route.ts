@@ -14,16 +14,38 @@ export const POST = async (req: NextRequest) => {
         }
 
         const userId = session.user.id
-        const { name, description, memberIds = [] } = await req.json() as IGroupSchema & { memberIds?: string[] }
+        const creatorEmail = session.user.email?.toLowerCase() ?? null
+        const { name, description, memberEmails = [] } = await req.json() as IGroupSchema & { memberEmails?: string[] }
 
         if (!name || typeof name !== "string") {
             return NextResponse.json({ error: "'name' is required" }, { status: 400 })
         }
 
-        // Ensure unique member ids and exclude creator (we add creator separately with CREATOR role)
-        const uniqueMemberIds = Array.isArray(memberIds)
-            ? Array.from(new Set(memberIds.filter((id) => id && id !== userId)))
+        // Normalize and de-duplicate emails, and exclude creator's email
+        const uniqueMemberEmails = Array.isArray(memberEmails)
+            ? Array.from(new Set(
+                memberEmails
+                    .filter((e) => typeof e === "string")
+                    .map((e) => e.trim().toLowerCase())
+                    .filter((e) => e && e !== creatorEmail)
+              ))
             : []
+
+        const existingUsers = uniqueMemberEmails.length
+            ? await prisma.user.findMany({
+                where: { email: { in: uniqueMemberEmails } },
+                select: { id: true, email: true },
+            })
+            : []
+
+        const foundEmailSet = new Set(existingUsers.map((u) => u.email.toLowerCase()))
+        const missingEmails = uniqueMemberEmails.filter((e) => !foundEmailSet.has(e))
+        if (missingEmails.length > 0) {
+            return NextResponse.json({
+                error: "The following email(s) don't belong to our app. Please invite them to sign up.",
+                missingEmails,
+            }, { status: 400 })
+        }
 
         const result = await prisma.$transaction(async (tx) => {
             const group = await tx.group.create({
@@ -33,15 +55,9 @@ export const POST = async (req: NextRequest) => {
                 },
             })
 
-            // Validate users exist to avoid FK errors
-            const existingUsers = uniqueMemberIds.length
-                ? await tx.user.findMany({ where: { id: { in: uniqueMemberIds } }, select: { id: true } })
-                : []
-            const validMemberIds = existingUsers.map((u) => u.id)
-
             const data = [
                 { groupId: group.id, userId, role: GroupRole.CREATOR },
-                ...validMemberIds.map((id) => ({ groupId: group.id, userId: id, role: GroupRole.MEMBER })),
+                ...existingUsers.map((u) => ({ groupId: group.id, userId: u.id, role: GroupRole.MEMBER })),
             ]
 
             const { count } = await tx.groupMember.createMany({ data, skipDuplicates: true })

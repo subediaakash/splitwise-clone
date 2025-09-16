@@ -107,6 +107,8 @@ enum SettlementStatus {
 
 model Group {
   id               String           @id @default(uuid())
+  isDeleted        Boolean          @default(false)
+  deletedAt        DateTime?
   name             String
   description      String?
   image            String?
