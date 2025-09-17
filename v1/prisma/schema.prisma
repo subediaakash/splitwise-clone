@@ -15,6 +15,8 @@ datasource db {
  * ===========================
  */
 
+ 
+
 model User {
   id            String   @id @default(uuid())
   name          String
@@ -155,9 +157,15 @@ enum ExpenseSplitType {
   EXACT // Custom amounts per participant
 }
 
+enum ExpenseType{
+  PERSONAL 
+  GROUP
+}
+
 model Expense {
   id          String           @id @default(uuid())
   groupId     String? // null if it's a personal expense
+  expenseType ExpenseType @default(GROUP)
   description String
   amount      Decimal          @db.Decimal(10, 2)
   currency    Currency         @default(INR)
@@ -165,6 +173,7 @@ model Expense {
   createdById String
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  totalExpenseSettlementStatus SettlementStatus @default(UNPAID)
 
   // Relations
   group        Group?               @relation(fields: [groupId], references: [id])
@@ -180,7 +189,7 @@ model ExpenseParticipant {
   expenseId String
   userId    String
   share     Decimal @db.Decimal(10, 2) // exact share owed by user
-
+  totalUserSettlementStatus SettlementStatus @default(UNPAID)
   expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
