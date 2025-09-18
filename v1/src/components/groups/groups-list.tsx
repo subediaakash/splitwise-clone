@@ -3,7 +3,15 @@ import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowUpDown, Clock, User, CheckCircle2, CircleSlash2, CircleEllipsis, ChevronRight } from "lucide-react";
+import {
+    ArrowUpDown,
+    Clock,
+    User,
+    CheckCircle2,
+    CircleSlash2,
+    CircleEllipsis,
+    ChevronRight,
+} from "lucide-react";
 
 export type GroupStatus = "paid" | "partiallyPaid" | "unpaid";
 
@@ -31,7 +39,11 @@ const sortOptions: { key: SortKey; label: string; icon?: React.ElementType }[] =
     { key: "paid", label: "Paid", icon: CheckCircle2 },
 ];
 
-export default function GroupsList({ variant = "list", title, className }: GroupsListProps) {
+export default function GroupsList({
+    variant = "list",
+    title,
+    className,
+}: GroupsListProps) {
     const [sortBy, setSortBy] = useState<SortKey>("time");
     const [query, setQuery] = useState("");
 
@@ -46,12 +58,30 @@ export default function GroupsList({ variant = "list", title, className }: Group
                 setIsLoading(true);
                 const res = await fetch("/api/groups", { method: "GET" });
                 if (!res.ok) throw new Error("Failed to fetch groups");
-                const data: { groups: Group[] } = await res.json();
+                const data = await res.json();
+
                 if (!isMounted) return;
-                setServerGroups(data.groups ?? []);
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mappedGroups: Group[] = (data ?? []).map((g: any) => ({
+                    id: g.id,
+                    name: g.name,
+                    createdAt: g.createdAt,
+                    // You can compute or default these
+                    status:
+                        g.settlementStatus === "CLEAR"
+                            ? "paid"
+                            : g.settlementStatus === "PARTIALLY_CLEAR"
+                                ? "partiallyPaid"
+                                : "unpaid",
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    selfCreated: g.groupMembers?.some((m: any) => m.role === "CREATOR") ?? false,
+                }));
+
+                setServerGroups(mappedGroups);
                 setError(null);
             } catch (error) {
-                console.log(error)
+                console.error(error);
                 if (!isMounted) return;
                 setError("Failed to load groups");
                 setServerGroups([]);
@@ -75,15 +105,29 @@ export default function GroupsList({ variant = "list", title, className }: Group
         const arr = [...filtered];
         switch (sortBy) {
             case "time":
-                return arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                return arr.sort(
+                    (a, b) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
             case "selfCreated":
-                return arr.sort((a, b) => Number(b.selfCreated) - Number(a.selfCreated));
+                return arr.sort(
+                    (a, b) => Number(b.selfCreated) - Number(a.selfCreated)
+                );
             case "unpaid":
-                return arr.sort((a, b) => Number(b.status === "unpaid") - Number(a.status === "unpaid"));
+                return arr.sort(
+                    (a, b) =>
+                        Number(b.status === "unpaid") - Number(a.status === "unpaid")
+                );
             case "partiallyPaid":
-                return arr.sort((a, b) => Number(b.status === "partiallyPaid") - Number(a.status === "partiallyPaid"));
+                return arr.sort(
+                    (a, b) =>
+                        Number(b.status === "partiallyPaid") -
+                        Number(a.status === "partiallyPaid")
+                );
             case "paid":
-                return arr.sort((a, b) => Number(b.status === "paid") - Number(a.status === "paid"));
+                return arr.sort(
+                    (a, b) => Number(b.status === "paid") - Number(a.status === "paid")
+                );
             default:
                 return arr;
         }
@@ -96,14 +140,33 @@ export default function GroupsList({ variant = "list", title, className }: Group
                     <span className="text-sm text-[#5c5c5c]">Sort : by</span>
                     <div className="glass border rounded-full p-1 flex items-center gap-1">
                         {sortOptions.map(({ key, label, icon: Icon }) => (
-                            <button key={key} className={cn("rounded-full px-3 py-1 text-sm transition-colors", sortBy === key ? "bg-[#123458] text-[#F1EFEC]" : "text-[#123458] hover:bg-black/5")} onClick={() => setSortBy(key)}>
+                            <button
+                                key={key}
+                                className={cn(
+                                    "rounded-full px-3 py-1 text-sm transition-colors",
+                                    sortBy === key
+                                        ? "bg-[#123458] text-[#F1EFEC]"
+                                        : "text-[#123458] hover:bg-black/5"
+                                )}
+                                onClick={() => setSortBy(key)}
+                            >
                                 <span className="inline-flex items-center gap-1">
-                                    {Icon ? <Icon className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                                    {Icon ? (
+                                        <Icon className="w-4 h-4" />
+                                    ) : (
+                                        <ArrowUpDown className="w-4 h-4" />
+                                    )}
                                     {label}
                                 </span>
                             </button>
                         ))}
-                        <button className="rounded-full px-3 py-1 text-sm text-[#123458] hover:bg-black/5" onClick={() => { setSortBy("time"); setQuery(""); }}>
+                        <button
+                            className="rounded-full px-3 py-1 text-sm text-[#123458] hover:bg-black/5"
+                            onClick={() => {
+                                setSortBy("time");
+                                setQuery("");
+                            }}
+                        >
                             Clear
                         </button>
                     </div>
@@ -145,17 +208,35 @@ export default function GroupsList({ variant = "list", title, className }: Group
 
 function GroupCard({ group }: { group: Group }) {
     const statusBadge = {
-        unpaid: { label: "unpaid", color: "bg-red-100 text-red-700 border-red-200" },
-        partiallyPaid: { label: "partially paid", color: "bg-amber-100 text-amber-800 border-amber-200" },
-        paid: { label: "paid", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+        unpaid: {
+            label: "unpaid",
+            color: "bg-red-100 text-red-700 border-red-200",
+        },
+        partiallyPaid: {
+            label: "partially paid",
+            color: "bg-amber-100 text-amber-800 border-amber-200",
+        },
+        paid: {
+            label: "paid",
+            color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        },
     }[group.status];
 
     return (
         <Card className="glass border rounded-2xl hover:shadow-md transition-all">
             <CardContent className="p-5">
                 <div className="flex items-center justify-between gap-3">
-                    <h4 className="font-semibold text-lg text-[#123458] truncate">{group.name}</h4>
-                    <span className={cn("text-xs px-2 py-1 rounded-full border", statusBadge.color)}>{statusBadge.label}</span>
+                    <h4 className="font-semibold text-lg text-[#123458] truncate">
+                        {group.name}
+                    </h4>
+                    <span
+                        className={cn(
+                            "text-xs px-2 py-1 rounded-full border",
+                            statusBadge.color
+                        )}
+                    >
+                        {statusBadge.label}
+                    </span>
                 </div>
                 <div className="mt-3 text-sm text-[#5c5c5c] flex items-center gap-2">
                     <Clock className="w-4 h-4" />
@@ -165,7 +246,9 @@ function GroupCard({ group }: { group: Group }) {
                     {group.selfCreated ? "You created this group" : "Shared with you"}
                 </div>
                 <div className="mt-4 flex items-center justify-end">
-                    <Button size="sm" className="rounded-xl">Open</Button>
+                    <Button size="sm" className="rounded-xl">
+                        Open
+                    </Button>
                 </div>
             </CardContent>
         </Card>
@@ -180,9 +263,18 @@ function GroupRow({ group }: { group: Group }) {
     }[group.status];
 
     const statusBadge = {
-        unpaid: { label: "unpaid", color: "bg-red-100 text-red-700 border-red-200" },
-        partiallyPaid: { label: "partially paid", color: "bg-amber-100 text-amber-800 border-amber-200" },
-        paid: { label: "paid", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+        unpaid: {
+            label: "unpaid",
+            color: "bg-red-100 text-red-700 border-red-200",
+        },
+        partiallyPaid: {
+            label: "partially paid",
+            color: "bg-amber-100 text-amber-800 border-amber-200",
+        },
+        paid: {
+            label: "paid",
+            color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        },
     }[group.status];
 
     return (
@@ -192,18 +284,29 @@ function GroupRow({ group }: { group: Group }) {
                     <div className="flex items-center gap-3 min-w-0">
                         <div className={cn("size-8 rounded-full shrink-0", statusColor)} />
                         <div className="min-w-0">
-                            <div className="font-medium text-[#123458] truncate">{group.name}</div>
+                            <div className="font-medium text-[#123458] truncate">
+                                {group.name}
+                            </div>
                             <div className="text-xs text-[#5c5c5c] flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {new Date(group.createdAt).toLocaleDateString()} {group.selfCreated ? "• you created" : "• shared"}
+                                <Clock className="w-3 h-3" />{" "}
+                                {new Date(group.createdAt).toLocaleDateString()}{" "}
+                                {group.selfCreated ? "• you created" : "• shared"}
                             </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className={cn("text-xs px-2 py-1 rounded-full border whitespace-nowrap", statusBadge.color)}>{statusBadge.label}</span>
+                        <span
+                            className={cn(
+                                "text-xs px-2 py-1 rounded-full border whitespace-nowrap",
+                                statusBadge.color
+                            )}
+                        >
+                            {statusBadge.label}
+                        </span>
                         <ChevronRight className="w-4 h-4 text-[#5c5c5c]" />
                     </div>
                 </div>
             </CardContent>
         </Card>
     );
-} 
+}
